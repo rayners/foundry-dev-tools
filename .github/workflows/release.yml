@@ -1,0 +1,109 @@
+name: Release Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to release (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@rayners'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate package structure
+        run: |
+          echo "Validating package files..."
+          test -f configs/eslint.config.js
+          test -f configs/prettier.config.js
+          test -f configs/tsconfig.base.json
+          test -f configs/vitest.config.js
+          test -f rollup/foundry-config.js
+          test -f index.js
+          test -f README.md
+
+      - name: Get version from tag or input
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Update package.json version
+        run: |
+          npm version ${{ steps.version.outputs.version }} --no-git-tag-version
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          release_name: "v${{ steps.version.outputs.version }}: Foundry Dev Tools"
+          body: |
+            🛠️ **Foundry VTT Development Tools v${{ steps.version.outputs.version }}**
+            
+            Shared development configurations and build tools for FoundryVTT modules.
+            
+            ## Installation
+            
+            ```bash
+            npm install --save-dev @rayners/foundry-dev-tools@^${{ steps.version.outputs.version }}
+            ```
+            
+            ## What's Included
+            
+            - **Rollup Configuration Factory**: Standardized build with Foundry optimizations
+            - **Shared Configs**: TypeScript, ESLint, Prettier, Vitest base configurations  
+            - **GitHub Release Integration**: Automatic URL injection for module distribution
+            - **Development Server**: Built-in dev server with live reload
+            
+            ## Impact
+            
+            - Eliminates ~200 lines of configuration duplication per module
+            - Single source of truth for build tooling across all FoundryVTT modules
+            - Consistent code quality standards
+            
+            See the [README](https://github.com/rayners/foundry-dev-tools#readme) for complete usage instructions.
+            
+            🤖 Generated with automated release workflow
+          draft: false
+          prerelease: false
+
+  notify:
+    needs: release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Notify dependent repositories
+        run: |
+          echo "Package @rayners/foundry-dev-tools@${{ needs.release.outputs.version }} published successfully"
+          echo "Dependent repositories can now update their package.json files"

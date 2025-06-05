@@ -1,0 +1,118 @@
+name: Update Dependent Modules
+
+on:
+  workflow_run:
+    workflows: ["Release Package"]
+    types:
+      - completed
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version that was just released'
+        required: true
+        type: string
+
+jobs:
+  update-modules:
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        module: 
+          - rayners/fvtt-errors-and-echoes
+          - rayners/fvtt-journeys-and-jamborees
+          - rayners/fvtt-realms-and-reaches
+          - rayners/fvtt-seasons-and-stars
+    
+    steps:
+      - name: Get version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "version=${{ github.event.inputs.version }}" >> $GITHUB_OUTPUT
+          else
+            # Extract version from the triggering workflow
+            echo "version=latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create update PR for ${{ matrix.module }}
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const [owner, repo] = "${{ matrix.module }}".split('/');
+            
+            try {
+              // Create a new branch
+              const { data: ref } = await github.rest.git.getRef({
+                owner,
+                repo,
+                ref: 'heads/main'
+              });
+              
+              const branchName = `update-foundry-dev-tools-${{ steps.version.outputs.version }}`;
+              
+              await github.rest.git.createRef({
+                owner,
+                repo,
+                ref: `refs/heads/${branchName}`,
+                sha: ref.object.sha
+              });
+              
+              // Get current package.json
+              const { data: packageFile } = await github.rest.repos.getContent({
+                owner,
+                repo,
+                path: 'package.json',
+                ref: branchName
+              });
+              
+              const packageJson = JSON.parse(
+                Buffer.from(packageFile.content, 'base64').toString()
+              );
+              
+              // Update foundry-dev-tools version
+              if (packageJson.devDependencies && packageJson.devDependencies['@rayners/foundry-dev-tools']) {
+                packageJson.devDependencies['@rayners/foundry-dev-tools'] = '^${{ steps.version.outputs.version }}';
+                
+                // Update the file
+                await github.rest.repos.createOrUpdateFileContents({
+                  owner,
+                  repo,
+                  path: 'package.json',
+                  message: 'chore: update @rayners/foundry-dev-tools to v${{ steps.version.outputs.version }}',
+                  content: Buffer.from(JSON.stringify(packageJson, null, 2)).toString('base64'),
+                  sha: packageFile.sha,
+                  branch: branchName
+                });
+                
+                // Create pull request
+                await github.rest.pulls.create({
+                  owner,
+                  repo,
+                  title: 'chore: update @rayners/foundry-dev-tools to v${{ steps.version.outputs.version }}',
+                  head: branchName,
+                  base: 'main',
+                  body: `🤖 **Automated dependency update**
+                  
+                  Updates \`@rayners/foundry-dev-tools\` to version \`${{ steps.version.outputs.version }}\`.
+                  
+                  ## Changes
+                  - Updated package.json dependency version
+                  
+                  ## Testing
+                  - [ ] Run \`npm install\` to update dependencies
+                  - [ ] Run \`npm run build\` to verify build works
+                  - [ ] Run \`npm run test\` to verify tests pass
+                  - [ ] Run \`npm run lint\` to verify linting works
+                  
+                  This PR was automatically created by the foundry-dev-tools release workflow.`
+                });
+                
+                console.log(`✅ Created update PR for ${repo}`);
+              } else {
+                console.log(`ℹ️ ${repo} does not use @rayners/foundry-dev-tools`);
+              }
+            } catch (error) {
+              console.error(`❌ Failed to update ${repo}:`, error.message);
+            }

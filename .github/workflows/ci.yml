@@ -1,0 +1,73 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate package structure
+        run: |
+          echo "Validating foundry-dev-tools package structure..."
+          
+          # Check required config files exist
+          test -f configs/eslint.config.js || { echo "Missing eslint.config.js"; exit 1; }
+          test -f configs/prettier.config.js || { echo "Missing prettier.config.js"; exit 1; }
+          test -f configs/tsconfig.base.json || { echo "Missing tsconfig.base.json"; exit 1; }
+          test -f configs/vitest.config.js || { echo "Missing vitest.config.js"; exit 1; }
+          test -f rollup/foundry-config.js || { echo "Missing foundry-config.js"; exit 1; }
+          test -f index.js || { echo "Missing index.js"; exit 1; }
+          
+          echo "✅ All required files present"
+
+      - name: Validate JavaScript syntax
+        run: |
+          echo "Validating JavaScript syntax..."
+          node -c configs/eslint.config.js
+          node -c configs/prettier.config.js  
+          node -c configs/vitest.config.js
+          node -c rollup/foundry-config.js
+          node -c index.js
+          echo "✅ All JavaScript files have valid syntax"
+
+      - name: Validate JSON syntax
+        run: |
+          echo "Validating JSON syntax..."
+          node -e "JSON.parse(require('fs').readFileSync('configs/tsconfig.base.json', 'utf8'))"
+          node -e "JSON.parse(require('fs').readFileSync('package.json', 'utf8'))"
+          echo "✅ All JSON files have valid syntax"
+
+      - name: Check exports
+        run: |
+          echo "Validating package exports..."
+          node -e "
+            const pkg = require('./index.js');
+            const required = ['createFoundryConfig', 'createFoundryTestConfig', 'eslintConfig', 'prettierConfig'];
+            const missing = required.filter(exp => !pkg[exp]);
+            if (missing.length > 0) {
+              console.error('Missing exports:', missing);
+              process.exit(1);
+            }
+            console.log('✅ All required exports present');
+          "
+
+      - name: Test package creation
+        run: |
+          npm pack --dry-run
+          echo "✅ Package can be created successfully"
