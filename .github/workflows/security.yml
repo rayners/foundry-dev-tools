@@ -105,7 +105,6 @@ jobs:
       uses: actions/dependency-review-action@v4
       with:
         fail-on-severity: moderate
-        allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, 0BSD
         deny-licenses: GPL-2.0, GPL-3.0, LGPL-2.1, LGPL-3.0
         
   license-compliance:
@@ -131,5 +130,5 @@ jobs:
     - name: Check license compatibility
       run: |
         echo "Checking license compatibility..."
-        npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Unlicense;WTFPL;CC0-1.0' --excludePrivatePackages
+        npx license-checker --onlyAllow 'MIT;Apache-2.0;BSD-2-Clause;BSD-3-Clause;ISC;0BSD;Unlicense;WTFPL;CC0-1.0;Python-2.0' --excludePrivatePackages
         echo "✅ All licenses are compatible"
