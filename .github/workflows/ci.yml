@@ -66,14 +66,18 @@ jobs:
         run: |
           echo "Validating package exports..."
           node -e "
-            const pkg = require('./index.js');
-            const required = ['createFoundryConfig', 'createFoundryTestConfig', 'eslintConfig', 'prettierConfig'];
-            const missing = required.filter(exp => !pkg[exp]);
-            if (missing.length > 0) {
-              console.error('Missing exports:', missing);
+            import('./index.js').then(pkg => {
+              const required = ['createFoundryConfig', 'createFoundryTestConfig', 'eslintConfig', 'prettierConfig'];
+              const missing = required.filter(exp => !pkg[exp]);
+              if (missing.length > 0) {
+                console.error('Missing exports:', missing);
+                process.exit(1);
+              }
+              console.log('✅ All required exports present');
+            }).catch(err => {
+              console.error('Failed to import package:', err);
               process.exit(1);
-            }
-            console.log('✅ All required exports present');
+            });
           "
 
       - name: Test package creation
