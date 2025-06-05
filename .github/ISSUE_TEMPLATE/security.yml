@@ -1,0 +1,141 @@
+name: Security Issue
+description: Report a security vulnerability in foundry-dev-tools
+title: "[Security] "
+labels: ["security", "urgent"]
+assignees:
+  - rayners
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ⚠️ **Security Issue Reporting**
+        
+        Thanks for helping to keep foundry-dev-tools secure! Please provide details about the security issue.
+        
+        **For severe vulnerabilities, consider emailing rayners@gmail.com directly instead of creating a public issue.**
+
+  - type: input
+    id: version
+    attributes:
+      label: Affected Version(s)
+      description: Which versions of @rayners/foundry-dev-tools are affected?
+      placeholder: "e.g., 1.0.6, or all versions since 1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity Level
+      description: How severe is this security issue?
+      options:
+        - Low - Minor information disclosure
+        - Medium - Limited access or functionality compromise
+        - High - Significant access or data compromise
+        - Critical - Full system compromise or widespread impact
+    validations:
+      required: true
+
+  - type: dropdown
+    id: category
+    attributes:
+      label: Vulnerability Category
+      description: What type of security issue is this?
+      options:
+        - Dependency Vulnerability
+        - Code Injection
+        - Path Traversal
+        - Information Disclosure
+        - Supply Chain Attack
+        - Configuration Security
+        - Other
+    validations:
+      required: true
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Vulnerability Description
+      description: Describe the security vulnerability
+      placeholder: |
+        Provide a clear description of the vulnerability:
+        - What component is affected?
+        - How can it be exploited?
+        - What are the potential impacts?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Proof of Concept
+      description: If applicable, provide steps to reproduce or demonstrate the vulnerability
+      placeholder: |
+        1. Install/configure...
+        2. Execute...
+        3. Observe vulnerability...
+        
+        **Note: Please be careful not to include actual exploit code that could be misused.**
+
+  - type: textarea
+    id: impact
+    attributes:
+      label: Impact Assessment
+      description: What are the potential consequences of this vulnerability?
+      placeholder: |
+        - Who could be affected?
+        - What data or systems could be compromised?
+        - What are the potential attack scenarios?
+    validations:
+      required: true
+
+  - type: textarea
+    id: mitigation
+    attributes:
+      label: Suggested Mitigation
+      description: Do you have any suggestions for fixing this vulnerability?
+      placeholder: |
+        - Update dependency X to version Y
+        - Add input validation for...
+        - Change configuration to...
+
+  - type: input
+    id: discovered
+    attributes:
+      label: Discovery Method
+      description: How was this vulnerability discovered?
+      placeholder: "e.g., automated scan, manual review, external report"
+
+  - type: input
+    id: cve
+    attributes:
+      label: Related CVE
+      description: If this relates to a known CVE, please provide the identifier
+      placeholder: "e.g., CVE-2024-12345"
+
+  - type: checkboxes
+    id: disclosure
+    attributes:
+      label: Responsible Disclosure
+      description: Please confirm your commitment to responsible disclosure
+      options:
+        - label: I agree to follow responsible disclosure practices
+          required: true
+        - label: I will not publicly disclose details until a fix is available
+          required: true
+        - label: I understand this issue will be handled with appropriate urgency
+          required: true
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please confirm the following
+      options:
+        - label: I have verified this is a legitimate security issue
+          required: true
+        - label: I have provided sufficient detail for investigation
+          required: true
+        - label: I have not included actual exploit code
+          required: true

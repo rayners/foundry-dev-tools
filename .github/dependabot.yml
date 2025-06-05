@@ -1,0 +1,81 @@
+version: 2
+updates:
+  # Enable version updates for npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 10
+    groups:
+      # Group ESLint related updates
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+          - "typescript-eslint"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Group Rollup related updates
+      rollup:
+        patterns:
+          - "rollup*"
+          - "@rollup/*"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Group Vitest related updates
+      vitest:
+        patterns:
+          - "vitest*"
+          - "@vitest/*"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Group TypeScript related updates
+      typescript:
+        patterns:
+          - "typescript*"
+          - "@types/*"
+          - "tslib"
+        update-types:
+          - "minor"
+          - "patch"
+      
+      # Group all patch updates together
+      patch-updates:
+        update-types:
+          - "patch"
+    
+    # Customize commit messages
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    
+    # Set assignees and reviewers
+    assignees:
+      - "rayners"
+    reviewers:
+      - "rayners"
+
+  # Enable version updates for GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "daily"
+      time: "09:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    assignees:
+      - "rayners"
+    reviewers:
+      - "rayners"
