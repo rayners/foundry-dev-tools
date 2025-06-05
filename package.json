@@ -1,6 +1,6 @@
 {
   "name": "@rayners/foundry-dev-tools",
-  "version": "1.0.6",
+  "version": "1.1.0",
   "description": "Shared development tools and configurations for FoundryVTT modules",
   "main": "index.js",
   "type": "module",
