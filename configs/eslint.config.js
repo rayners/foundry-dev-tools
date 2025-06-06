@@ -11,7 +11,7 @@
 import eslint from '@eslint/js';
 import tseslint from 'typescript-eslint';
 
-export default tseslint.config(
+export default [
   // Base JS rules
   eslint.configs.recommended,
   
@@ -92,4 +92,4 @@ export default tseslint.config(
       "@typescript-eslint/no-non-null-assertion": "warn",
     }
   }
-);
+];
