@@ -51,7 +51,6 @@
   },
   "dependencies": {
     "@eslint/js": "^9.18.0",
-    "@rayners/foundry-dev-tools": "^1.2.0",
     "@rollup/plugin-node-resolve": "^15.0.0",
     "@rollup/plugin-typescript": "^11.0.0",
     "@vitest/coverage-v8": "^3.1.4",
