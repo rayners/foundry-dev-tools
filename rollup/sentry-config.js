@@ -30,8 +30,15 @@ export function createSentryConfig(moduleId, version, options = {}) {
   const alreadyUploaded = (() => {
     try {
       const fs = require('fs');
-      return fs.existsSync(uploadMarkerFile);
+      const exists = fs.existsSync(uploadMarkerFile);
+      console.log(`🔍 Checking marker file: ${uploadMarkerFile} in ${process.cwd()} - exists: ${exists}`);
+      if (exists) {
+        const content = fs.readFileSync(uploadMarkerFile, 'utf8');
+        console.log(`📄 Marker content: ${content}`);
+      }
+      return exists;
     } catch (error) {
+      console.log(`⚠️ Error checking marker file: ${error.message}`);
       return false; // If fs not available, proceed with upload
     }
   })();
@@ -80,8 +87,10 @@ export function createSentryConfig(moduleId, version, options = {}) {
     // Create marker file after successful upload
     try {
       const fs = require('fs');
-      fs.writeFileSync(uploadMarkerFile, `Uploaded ${releaseName} at ${new Date().toISOString()}`);
-      console.log(`✅ Created Sentry upload marker: ${uploadMarkerFile}`);
+      const content = `Uploaded ${releaseName} at ${new Date().toISOString()} from ${process.cwd()}`;
+      fs.writeFileSync(uploadMarkerFile, content);
+      console.log(`✅ Created Sentry upload marker: ${uploadMarkerFile} in ${process.cwd()}`);
+      console.log(`📄 Marker content: ${content}`);
     } catch (error) {
       console.warn('⚠️ Failed to create Sentry upload marker:', error.message);
     }
