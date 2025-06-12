@@ -22,12 +22,12 @@ export function createSentryConfig(moduleId, version, options = {}) {
     pluginOptions = {}
   } = options;
 
-  // Only enable in CI/release environments unless explicitly overridden
-  const isReleaseBuild = process.env.CI === 'true' || process.env.NODE_ENV === 'production';
+  // Only enable for actual releases, not CI builds
+  const isReleaseBuild = process.env.NODE_ENV === 'production' || process.env.GITHUB_EVENT_NAME === 'release';
   const shouldUpload = !skipUpload && isReleaseBuild && process.env.SENTRY_AUTH_TOKEN;
 
   if (!shouldUpload) {
-    console.log(`ℹ️ Sentry sourcemap upload disabled for ${moduleId} (CI: ${process.env.CI}, NODE_ENV: ${process.env.NODE_ENV}, Token: ${!!process.env.SENTRY_AUTH_TOKEN})`);
+    console.log(`ℹ️ Sentry sourcemap upload disabled for ${moduleId} (NODE_ENV: ${process.env.NODE_ENV}, Event: ${process.env.GITHUB_EVENT_NAME}, Token: ${!!process.env.SENTRY_AUTH_TOKEN})`);
     return null; // Return null to exclude from plugins array
   }
 
