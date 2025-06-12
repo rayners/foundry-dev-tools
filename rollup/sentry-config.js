@@ -24,10 +24,23 @@ export function createSentryConfig(moduleId, version, options = {}) {
 
   // Only enable for actual releases, not CI builds
   const isReleaseBuild = process.env.NODE_ENV === 'production' || process.env.GITHUB_EVENT_NAME === 'release';
-  const shouldUpload = !skipUpload && isReleaseBuild && process.env.SENTRY_AUTH_TOKEN;
+  
+  // Check if we already uploaded for this version (prevents duplicate uploads in multi-build workflows)
+  const uploadMarkerFile = `.sentry-uploaded-${moduleId}-${version}`;
+  const alreadyUploaded = (() => {
+    try {
+      const fs = require('fs');
+      return fs.existsSync(uploadMarkerFile);
+    } catch (error) {
+      return false; // If fs not available, proceed with upload
+    }
+  })();
+  
+  const shouldUpload = !skipUpload && isReleaseBuild && process.env.SENTRY_AUTH_TOKEN && !alreadyUploaded;
 
   if (!shouldUpload) {
-    console.log(`ℹ️ Sentry sourcemap upload disabled for ${moduleId} (NODE_ENV: ${process.env.NODE_ENV}, Event: ${process.env.GITHUB_EVENT_NAME}, Token: ${!!process.env.SENTRY_AUTH_TOKEN})`);
+    const reason = alreadyUploaded ? 'already uploaded' : 'not release build or missing token';
+    console.log(`ℹ️ Sentry sourcemap upload disabled for ${moduleId} (${reason})`);
     return null; // Return null to exclude from plugins array
   }
 
@@ -35,7 +48,7 @@ export function createSentryConfig(moduleId, version, options = {}) {
   
   console.log(`🚀 Configuring Sentry sourcemap upload for ${releaseName}`);
 
-  return sentryRollupPlugin({
+  const sentryPlugin = sentryRollupPlugin({
     authToken: process.env.SENTRY_AUTH_TOKEN,
     org,
     project,
@@ -58,6 +71,25 @@ export function createSentryConfig(moduleId, version, options = {}) {
     },
     ...pluginOptions
   });
+
+  // Add hook to create marker file after successful upload
+  const originalBuildEnd = sentryPlugin.buildEnd || (() => {});
+  sentryPlugin.buildEnd = function(...args) {
+    const result = originalBuildEnd.apply(this, args);
+    
+    // Create marker file after successful upload
+    try {
+      const fs = require('fs');
+      fs.writeFileSync(uploadMarkerFile, `Uploaded ${releaseName} at ${new Date().toISOString()}`);
+      console.log(`✅ Created Sentry upload marker: ${uploadMarkerFile}`);
+    } catch (error) {
+      console.warn('⚠️ Failed to create Sentry upload marker:', error.message);
+    }
+    
+    return result;
+  };
+
+  return sentryPlugin;
 }
 
 /**
