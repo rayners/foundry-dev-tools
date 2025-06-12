@@ -1,4 +1,5 @@
 import { sentryRollupPlugin } from '@sentry/rollup-plugin';
+import fs from 'fs';
 
 /**
  * Create a Sentry sourcemap configuration for FoundryVTT modules
@@ -29,7 +30,6 @@ export function createSentryConfig(moduleId, version, options = {}) {
   const uploadMarkerFile = `.sentry-uploaded-${moduleId}-${version}`;
   const alreadyUploaded = (() => {
     try {
-      const fs = require('fs');
       const exists = fs.existsSync(uploadMarkerFile);
       console.log(`🔍 Checking marker file: ${uploadMarkerFile} in ${process.cwd()} - exists: ${exists}`);
       if (exists) {
@@ -86,7 +86,6 @@ export function createSentryConfig(moduleId, version, options = {}) {
     
     // Create marker file after successful upload
     try {
-      const fs = require('fs');
       const content = `Uploaded ${releaseName} at ${new Date().toISOString()} from ${process.cwd()}`;
       fs.writeFileSync(uploadMarkerFile, content);
       console.log(`✅ Created Sentry upload marker: ${uploadMarkerFile} in ${process.cwd()}`);
