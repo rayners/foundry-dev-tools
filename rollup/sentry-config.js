@@ -1,5 +1,4 @@
 import { sentryRollupPlugin } from '@sentry/rollup-plugin';
-import fs from 'fs';
 
 /**
  * Create a Sentry sourcemap configuration for FoundryVTT modules
@@ -23,31 +22,11 @@ export function createSentryConfig(moduleId, version, options = {}) {
     pluginOptions = {}
   } = options;
 
-  // Only enable for actual releases, not CI builds
-  const isReleaseBuild = process.env.NODE_ENV === 'production' || process.env.GITHUB_EVENT_NAME === 'release';
-  
-  // Check if we already uploaded for this version (prevents duplicate uploads in multi-build workflows)
-  const uploadMarkerFile = `.sentry-uploaded-${moduleId}-${version}`;
-  const alreadyUploaded = (() => {
-    try {
-      const exists = fs.existsSync(uploadMarkerFile);
-      console.log(`🔍 Checking marker file: ${uploadMarkerFile} in ${process.cwd()} - exists: ${exists}`);
-      if (exists) {
-        const content = fs.readFileSync(uploadMarkerFile, 'utf8');
-        console.log(`📄 Marker content: ${content}`);
-      }
-      return exists;
-    } catch (error) {
-      console.log(`⚠️ Error checking marker file: ${error.message}`);
-      return false; // If fs not available, proceed with upload
-    }
-  })();
-  
-  const shouldUpload = !skipUpload && isReleaseBuild && process.env.SENTRY_AUTH_TOKEN && !alreadyUploaded;
+  // Only enable when explicitly requested for release artifact builds
+  const shouldUpload = !skipUpload && process.env.UPLOAD_SOURCE_MAPS === 'true' && process.env.SENTRY_AUTH_TOKEN;
 
   if (!shouldUpload) {
-    const reason = alreadyUploaded ? 'already uploaded' : 'not release build or missing token';
-    console.log(`ℹ️ Sentry sourcemap upload disabled for ${moduleId} (${reason})`);
+    console.log(`ℹ️ Sentry sourcemap upload disabled for ${moduleId} (UPLOAD_SOURCE_MAPS: ${process.env.UPLOAD_SOURCE_MAPS}, Token: ${!!process.env.SENTRY_AUTH_TOKEN})`);
     return null; // Return null to exclude from plugins array
   }
 
@@ -55,7 +34,7 @@ export function createSentryConfig(moduleId, version, options = {}) {
   
   console.log(`🚀 Configuring Sentry sourcemap upload for ${releaseName}`);
 
-  const sentryPlugin = sentryRollupPlugin({
+  return sentryRollupPlugin({
     authToken: process.env.SENTRY_AUTH_TOKEN,
     org,
     project,
@@ -78,26 +57,6 @@ export function createSentryConfig(moduleId, version, options = {}) {
     },
     ...pluginOptions
   });
-
-  // Add hook to create marker file after successful upload
-  const originalBuildEnd = sentryPlugin.buildEnd || (() => {});
-  sentryPlugin.buildEnd = function(...args) {
-    const result = originalBuildEnd.apply(this, args);
-    
-    // Create marker file after successful upload
-    try {
-      const content = `Uploaded ${releaseName} at ${new Date().toISOString()} from ${process.cwd()}`;
-      fs.writeFileSync(uploadMarkerFile, content);
-      console.log(`✅ Created Sentry upload marker: ${uploadMarkerFile} in ${process.cwd()}`);
-      console.log(`📄 Marker content: ${content}`);
-    } catch (error) {
-      console.warn('⚠️ Failed to create Sentry upload marker:', error.message);
-    }
-    
-    return result;
-  };
-
-  return sentryPlugin;
 }
 
 /**
