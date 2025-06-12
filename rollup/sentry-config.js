@@ -7,7 +7,7 @@ import { sentryRollupPlugin } from '@sentry/rollup-plugin';
  * @param {string} version - The module version (should match package.json version)
  * @param {Object} [options={}] - Additional configuration options
  * @param {string} [options.org] - Sentry organization (default: "rayners")
- * @param {string} [options.project] - Sentry project (default: "foundry-modules")
+ * @param {string} [options.project] - Sentry project (default: "foundry-reports")
  * @param {boolean} [options.skipUpload] - Skip sourcemap upload (for testing)
  * @param {Object} [options.releaseOptions] - Additional release configuration
  * @param {Object} [options.pluginOptions] - Additional plugin configuration
@@ -41,13 +41,6 @@ export function createSentryConfig(moduleId, version, options = {}) {
     project,
     release: {
       name: releaseName,
-      uploadLegacySourcemaps: {
-        paths: ['./dist'],
-        urlPrefix: `~/modules/${moduleId}/`,
-        // Include source content in sourcemaps for better debugging
-        include: ['./dist/**/*.js', './dist/**/*.js.map'],
-        ignore: ['./dist/node_modules/**']
-      },
       // Automatically create and finalize the release
       create: true,
       finalize: true,
@@ -55,6 +48,7 @@ export function createSentryConfig(moduleId, version, options = {}) {
     },
     sourcemaps: {
       assets: ['./dist/**/*.js'],
+      urlPrefix: `~/modules/${moduleId}/`,
       filesToDeleteAfterUpload: ['./dist/**/*.js.map'] // Clean up sourcemap files after upload
     },
     errorHandler: (error) => {
