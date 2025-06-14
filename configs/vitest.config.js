@@ -22,6 +22,7 @@ const defaultConfig = {
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./test/setup.ts'],
+    reporters: ['default'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -62,6 +63,7 @@ export function createFoundryTestConfig(customConfig = {}) {
     test: {
       ...defaultConfig.test,
       ...customConfig.test,
+      reporters: customConfig.test?.reporters || defaultConfig.test.reporters,
       coverage: {
         ...defaultConfig.test.coverage,
         ...customConfig.test?.coverage,
@@ -70,6 +72,21 @@ export function createFoundryTestConfig(customConfig = {}) {
           ...customConfig.test?.coverage?.thresholds
         }
       }
+    }
+  });
+}
+
+/**
+ * Create a Vitest configuration with JUnit output for CI environments
+ * @param {Object} customConfig - Custom configuration to merge with defaults
+ * @returns {Object} Vitest configuration with JUnit reporter
+ */
+export function createFoundryTestConfigWithJUnit(customConfig = {}) {
+  return createFoundryTestConfig({
+    ...customConfig,
+    test: {
+      ...customConfig.test,
+      reporters: ['default', ['junit', { outputFile: 'test-report.junit.xml' }]]
     }
   });
 }
