@@ -62,6 +62,7 @@ declare global {
       api: {
         ApplicationV2: typeof ApplicationV2;
         HandlebarsApplicationMixin: typeof HandlebarsApplicationMixin;
+        DialogV2: typeof DialogV2;
       };
     };
     data: {
@@ -366,6 +367,53 @@ declare class FoundryDialog {
 
   constructor(data: any, options?: any);
   render(force?: boolean): Promise<this>;
+  close(): Promise<void>;
+}
+
+// DialogV2 - Modern Foundry V13 dialog API
+declare class DialogV2 {
+  static confirm(options: {
+    window?: { title: string };
+    content: string;
+    yes?: {
+      label?: string;
+      callback?: Function;
+    };
+    no?: {
+      label?: string;
+      callback?: Function;
+    };
+    defaultYes?: boolean;
+  }): Promise<boolean>;
+
+  static prompt(options: {
+    window?: { title: string };
+    content: string;
+    callback?: Function;
+  }): Promise<any>;
+
+  static input(options: {
+    window?: { title: string };
+    content: string;
+    ok?: {
+      label?: string;
+      callback?: Function;
+    };
+  }): Promise<string | null>;
+
+  constructor(options?: {
+    window?: { title: string };
+    content?: string;
+    buttons?: Array<{
+      action: string;
+      label: string;
+      default?: boolean;
+      callback?: Function;
+    }>;
+    submit?: Function;
+  });
+
+  render(options?: { force?: boolean }): Promise<this>;
   close(): Promise<void>;
 }
 
