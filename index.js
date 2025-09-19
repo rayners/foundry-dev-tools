@@ -10,8 +10,17 @@ export {
   createFoundryConfigWithDir 
 } from './rollup/foundry-config.js';
 
-// Test configurations  
-export { createFoundryTestConfig } from './configs/vitest.config.js';
+// Test configurations
+export {
+  createFoundryTestConfig,
+  createFoundryTestConfigWithJUnit
+} from './configs/vitest.config.js';
+
+// Sentry helpers
+export {
+  createSentryConfig,
+  createSentryTestConfig
+} from './rollup/sentry-config.js';
 
 // Re-export config files for direct import
 export { default as eslintConfig } from './configs/eslint.config.js';

@@ -10,6 +10,8 @@ npm install --save-dev @rayners/foundry-dev-tools
 
 ## Usage
 
+All of the runtime helpers are re-exported from the package entry point, so a single `@rayners/foundry-dev-tools` import covers Rollup builders, Vitest presets, and the Sentry utilities described below.
+
 ### Rollup Configuration
 
 Create or update your `rollup.config.js`:
@@ -45,7 +47,7 @@ Create or update your `tsconfig.json`:
 
 ```json
 {
-  "extends": "@rayners/foundry-dev-tools/configs/tsconfig.base.json",
+  "extends": "@rayners/foundry-dev-tools/tsconfig",
   "compilerOptions": {
     "types": ["jquery"],
     "typeRoots": ["./node_modules/@types", "./src/types"]
@@ -55,27 +57,31 @@ Create or update your `tsconfig.json`:
 
 ### ESLint Configuration
 
-Create or update your `.eslintrc.json`:
+Create or update `eslint.config.js`:
 
-```json
-{
-  "extends": ["@rayners/foundry-dev-tools/configs/eslint"]
-}
+```javascript
+import foundryConfig from '@rayners/foundry-dev-tools/eslint';
+
+export default [
+  ...foundryConfig
+];
 ```
+
+> **Type-aware linting requires a project file.** The shared preset enables `parserOptions.project`, so make sure a `tsconfig.json` exists at your project root (or adjust the option before exporting).
 
 ### Prettier Configuration
 
 Create `prettier.config.js`:
 
 ```javascript
-export { default } from '@rayners/foundry-dev-tools/configs/prettier.config.js';
+export { default } from '@rayners/foundry-dev-tools/prettier';
 ```
 
 Or add to your `package.json`:
 
 ```json
 {
-  "prettier": "@rayners/foundry-dev-tools/configs/prettier.config.js"
+  "prettier": "@rayners/foundry-dev-tools/prettier"
 }
 ```
 
@@ -84,7 +90,7 @@ Or add to your `package.json`:
 Create or update your `vitest.config.ts`:
 
 ```javascript
-import { createFoundryTestConfig } from '@rayners/foundry-dev-tools/configs/vitest.config.js';
+import { createFoundryTestConfig } from '@rayners/foundry-dev-tools';
 
 export default createFoundryTestConfig();
 ```
@@ -106,6 +112,32 @@ export default createFoundryTestConfig({
 });
 ```
 
+Need CI-friendly output?
+
+```javascript
+import { createFoundryTestConfigWithJUnit } from '@rayners/foundry-dev-tools';
+
+export default createFoundryTestConfigWithJUnit();
+```
+
+> The shared preset automatically includes `./test/setup.ts` when the file exists. Projects without that helper can use the preset as-is—Vitest will receive an empty `setupFiles` array.
+
+### Sentry Sourcemap Uploads
+
+The Sentry helpers are also available from the package entry point:
+
+```javascript
+import { createSentryConfig } from '@rayners/foundry-dev-tools';
+
+export default {
+  plugins: [
+    createSentryConfig('my-module', process.env.MODULE_VERSION)
+  ]
+};
+```
+
+Uploads only run when `UPLOAD_SOURCE_MAPS` is truthy and `SENTRY_AUTH_TOKEN` is present, making it safe to keep the plugin wired into local builds. For CI smoke tests, use `createSentryTestConfig` to keep the release plugin registered without attempting an upload.
+
 ## Features
 
 - **Standardized Rollup Configuration**: Automatic SCSS compilation, file copying, and GitHub release URL injection
@@ -113,6 +145,7 @@ export default createFoundryTestConfig({
 - **ESLint Rules**: Foundry-specific globals and TypeScript best practices
 - **Prettier Formatting**: Consistent code formatting across all modules
 - **Vitest Testing**: Pre-configured for FoundryVTT module testing with jsdom environment
+- **Sentry Integration**: Optional helpers to upload release sourcemaps only when CI variables are present
 - **Development Server**: Built-in dev server with live reload for faster development
 
 ## Configuration Options
@@ -120,6 +153,7 @@ export default createFoundryTestConfig({
 ### Rollup Options
 
 - `cssFileName`: **Required** - Output path for compiled CSS
+- `input`: Override the Rollup entry file (default: `src/module.ts`)
 - `additionalCopyTargets`: Additional files to copy to dist
 - `scssOptions`: Override SCSS plugin options
 - `typescriptOptions`: Override TypeScript plugin options  
@@ -150,6 +184,10 @@ After installing, you can remove these duplicate dependencies from your modules:
   }
 }
 ```
+
+### Foundry Type Definitions
+
+The bundled `types/foundry-v13-essentials.d.ts` file intentionally covers a "minimal but complete" slice of the Foundry VTT v13 API. Check for upstream changes whenever Foundry ships a new major release so your modules continue to receive accurate type hints (and feel free to contribute updates back here!).
 
 ## GitHub Packages
 

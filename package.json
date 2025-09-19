@@ -23,7 +23,7 @@
     "index.js"
   ],
   "scripts": {
-    "test": "echo \"No tests yet\"",
+    "test": "vitest run",
     "prepublishOnly": "echo \"Building shared configs...\"",
     "link-module": "node scripts/link-module.js"
   },
@@ -67,5 +67,8 @@
     "sass": "^1.62.0",
     "tslib": "^2.5.0",
     "typescript-eslint": "^8.19.0"
+  },
+  "devDependencies": {
+    "vitest": "^3.2.2"
   }
 }
