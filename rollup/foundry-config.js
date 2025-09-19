@@ -56,6 +56,7 @@ const standardCopyTargets = [
  * 
  * @param {Object} options - Configuration options
  * @param {string} options.cssFileName - CSS output filename (e.g., 'styles/module-name.css')
+ * @param {string} [options.input] - Rollup entry file (default: 'src/module.ts')
  * @param {Array} [options.additionalCopyTargets] - Additional files to copy
  * @param {Object} [options.scssOptions] - Additional SCSS plugin options
  * @param {Object} [options.typescriptOptions] - Additional TypeScript plugin options
@@ -72,7 +73,8 @@ export function createFoundryConfig(options = {}) {
     typescriptOptions = {},
     useDevServer = process.env.SERVE === 'true',
     devServerPort = 30000,
-    outputFormat = 'es'
+    outputFormat = 'es',
+    input = 'src/module.ts'
   } = options;
 
   if (!cssFileName) {
@@ -124,7 +126,7 @@ export function createFoundryConfig(options = {}) {
   }
 
   return {
-    input: 'src/module.ts',
+    input,
     output,
     plugins: plugins.filter(Boolean) // Remove any undefined plugins
   };

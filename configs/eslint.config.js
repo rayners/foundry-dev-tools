@@ -9,14 +9,30 @@
  */
 
 import eslint from '@eslint/js';
+import eslintConfigPrettier from 'eslint-config-prettier/flat';
+import prettierPlugin from 'eslint-plugin-prettier';
 import tseslint from 'typescript-eslint';
 
 export default [
   // Base JS rules
   eslint.configs.recommended,
-  
+
   // TypeScript rules for TS files
   ...tseslint.configs.recommended,
+
+  // Disable stylistic rules that conflict with Prettier
+  eslintConfigPrettier,
+
+  // Surface Prettier formatting issues as lint warnings
+  {
+    name: 'foundry-prettier',
+    plugins: {
+      prettier: prettierPlugin
+    },
+    rules: {
+      'prettier/prettier': 'warn'
+    }
+  },
   
   // Custom Foundry VTT configuration
   {
@@ -75,7 +91,7 @@ export default [
       
       // TypeScript-specific relaxed rules for Foundry development
       "@typescript-eslint/no-explicit-any": "warn",
-      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+      "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }]
     }
   },
   

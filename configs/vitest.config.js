@@ -1,3 +1,5 @@
+import { existsSync } from 'fs';
+import { resolve } from 'path';
 import { defineConfig } from 'vitest/config';
 
 /**
@@ -17,40 +19,49 @@ import { defineConfig } from 'vitest/config';
  * });
  */
 
-const defaultConfig = {
-  test: {
-    environment: 'jsdom',
-    globals: true,
-    setupFiles: ['./test/setup.ts'],
-    reporters: ['default'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: [
-        'node_modules/',
-        'test/',
-        'dist/',
-        '**/*.d.ts',
-        '*.config.*',
-        'docs/',
-        'templates/',
-        'styles/',
-        'calendars/',
-        'languages/',
-        'assets/',
-        'scripts/'
-      ],
-      thresholds: {
-        global: {
-          branches: 80,
-          functions: 80,
-          lines: 80,
-          statements: 80
+const DEFAULT_SETUP_FILE = './test/setup.ts';
+
+function detectSetupFiles() {
+  const setupFilePath = resolve(process.cwd(), 'test/setup.ts');
+  return existsSync(setupFilePath) ? [DEFAULT_SETUP_FILE] : [];
+}
+
+function createDefaultTestConfig() {
+  return {
+    test: {
+      environment: 'jsdom',
+      globals: true,
+      setupFiles: detectSetupFiles(),
+      reporters: ['default'],
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'json', 'html', 'lcov'],
+        exclude: [
+          'node_modules/',
+          'test/',
+          'dist/',
+          '**/*.d.ts',
+          '*.config.*',
+          'docs/',
+          'templates/',
+          'styles/',
+          'calendars/',
+          'languages/',
+          'assets/',
+          'scripts/'
+        ],
+        thresholds: {
+          global: {
+            branches: 80,
+            functions: 80,
+            lines: 80,
+            statements: 80
+          }
         }
       }
     }
-  }
-};
+  };
+}
 
 /**
  * Create a Vitest configuration for FoundryVTT modules
@@ -58,11 +69,14 @@ const defaultConfig = {
  * @returns {Object} Vitest configuration
  */
 export function createFoundryTestConfig(customConfig = {}) {
+  const defaultConfig = createDefaultTestConfig();
+
   return defineConfig({
     ...defaultConfig,
     test: {
       ...defaultConfig.test,
       ...customConfig.test,
+      setupFiles: customConfig.test?.setupFiles ?? defaultConfig.test.setupFiles,
       reporters: customConfig.test?.reporters || defaultConfig.test.reporters,
       coverage: {
         ...defaultConfig.test.coverage,
@@ -92,4 +106,4 @@ export function createFoundryTestConfigWithJUnit(customConfig = {}) {
 }
 
 // Export default config for direct use
-export default defineConfig(defaultConfig);
+export default defineConfig(createDefaultTestConfig());
